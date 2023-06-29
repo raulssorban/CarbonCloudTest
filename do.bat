@@ -66,7 +66,9 @@ steamcmd.exe +force_install_dir "%server%" ^
 			 -beta %BRANCH% ^
              validate ^
              +quit ^
-			 
+		
+cd "%server%"
+echo Staring server...		
 RustDedicated.exe -nographics -batchmode -logs -silent-crashes ^
      -server.hostname "Legit Server" ^
      -server.identity "main" ^
