@@ -24,3 +24,10 @@ jobs:
         shell: cmd
         run: |
           %GITHUB_WORKSPACE%\do.bat
+          
+      - name: ⬆️ Upload the artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-production-windows
+          path: |
+            server/main_log.txt
