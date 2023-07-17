@@ -78,7 +78,8 @@ RustDedicated.exe -nographics -batchmode -logs -silent-crashes ^
      -server.saveinterval 400 ^
      -server.maxplayers 1 ^
      -chat.serverlog 1 ^
-	 -global.asyncwarmup t ^
+	 -global.asyncwarmup 1 ^
+	 -aimanager.nav_disable 1 ^
 	 -encryption 0 ^
 	 -secure 0 ^
      +server.seed 6969696 ^
