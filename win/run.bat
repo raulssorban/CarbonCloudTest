@@ -70,20 +70,18 @@ steamcmd.exe +force_install_dir "%server%" ^
 cd "%server%"
 echo Staring server...		
 RustDedicated.exe -nographics -batchmode -logs -silent-crashes ^
-     -server.hostname "Legit Server" ^
-     -server.identity "main" ^
-     -server.port 29850 ^
-     -server.queryport 29851 ^
-     -server.netlog ^
-     -server.saveinterval 400 ^
-     -server.maxplayers 1 ^
-     -chat.serverlog 1 ^
-	 -global.asyncwarmup 1 ^
-	 -aimanager.nav_disable 1 ^
-	 -encryption 0 ^
-	 -secure 0 ^
-     +server.seed 6969696 ^
-     +server.worldsize 1500 ^
-     -logfile "main_log.txt" ^
+                  -server.hostname "Legit Server" ^
+                  -server.identity "main" ^
+                  -server.port 29850 ^
+                  -server.queryport 29851 ^
+                  -server.saveinterval 400 ^
+                  -server.maxplayers 1 ^
+                  -chat.serverlog 1 ^
+                  -global.asyncwarmup 1 ^
+				  -aimanager.nav_disable 1 ^
+				  +carbon.onserverinit "restart 10" ^
+                  +server.seed 123123 ^
+                  +server.worldsize 1500 ^
+                  -logfile "main_log.txt" ^
 			 
 exit /b 0
