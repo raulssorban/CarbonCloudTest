@@ -57,10 +57,12 @@ if not exist "%steam%" (
 rem Cleanup
 del "%root%\carbon.zip"
 
+tree
+
 rem Download the server
 cd "%steam%"
 echo Downloading Rust server on %BRANCH% branch...
-steamcmd.exe +force_install_dir "%server%" ^
+rem steamcmd.exe +force_install_dir "%server%" ^
 			 +login anonymous ^
              +app_update 258550 ^
 			 -beta %BRANCH% ^
