@@ -7,6 +7,6 @@ public class Yeet : CarbonPlugin
 {
 	private void OnServerInitialized()
 	{
-		Application.Quit();
+		ConsoleSystem.Run("quit");
 	}
 }
