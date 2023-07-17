@@ -57,7 +57,7 @@ if not exist "%steam%" (
 rem Cleanup
 del "%root%\carbon.zip"
 
-tree
+echo %cd%
 
 rem Download the server
 cd "%steam%"
