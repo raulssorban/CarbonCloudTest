@@ -98,7 +98,7 @@ jobs:
   # RELEASE --------------------------------------------------------------------
   release-on-schedule:
     name: 💾 Production Release
-    needs: [ "bootstrap" ]
+    needs: [ "bootstrap", "build-linux" ]
     runs-on: ubuntu-latest
     if: ${{ (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (github.event_name == 'schedule' && needs.build-linux.outputs.wipe == 'true') }}
 
