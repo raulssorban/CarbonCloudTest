@@ -75,7 +75,7 @@ jobs:
         command: build
         args: -r --target x86_64-unknown-linux-gnu
         directory: Carbon.Core/Carbon.Native
-
+        
     - name: 🔨 Setup the Carbon build environment
       shell: bash
       run: |
@@ -94,49 +94,26 @@ jobs:
         path: |
           Release/Carbon.Linux.Minimal.tar.gz
           Release/Carbon.Linux.Minimal.info
-
+          
     - name: 🗑️ Delete existing release tag
       uses: dev-drprasad/delete-tag-and-release@92d94d77429cb0436597047a92369526a5824f50
       with:
-        delete_release: false
+        delete_release: true
         tag_name: productionprev_build
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Rename tag
+    - name: 🐧 Built Carbon on Linux
+      shell: bash
       run: |
-        # Remove the old tag locally
-        git tag -d production_build
-        # Create a new tag pointing to the same commit
-        git tag productionprev_build
-        # Push the new tag to GitHub
-        git push origin productionprev_build
-        # Delete the old tag from the remote
-        git push origin :refs/tags/production_build
-
-    - name: Delete and recreate release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        # Get the release ID of the old release
-        release_id=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/repos/${{ github.repository }}/releases/tags/production_build" | jq -r '.id')
-
-        # Delete the old release
-        curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
-
-        # Create a new release with the new tag
-        curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "tag_name": "productionprev_build",
-            "target_commitish": "main",
-            "name": "New Release",
-            "body": "This is the release description",
-            "draft": false,
-            "prerelease": false
-          }' "https://api.github.com/repos/${{ github.repository }}/releases"
+        # assuming you are in the branch referencing currently the right new commit:
+        git tag -f productionprev_build
+        
+        # push your new commit:
+        git push 
+        
+        # force push your moved tag:
+        git push origin -f productionprev_build
 
 
   # RELEASE --------------------------------------------------------------------
@@ -167,7 +144,7 @@ jobs:
     - name: Display structure of downloaded files
       run: ls -R
       working-directory: Release
-      
+
     - name: 🏷️ Update release tag
       uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b
       with:
