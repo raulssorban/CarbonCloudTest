@@ -152,3 +152,6 @@ jobs:
           3. Restart the server and enjoy.
           
           ${{ needs.build-linux.outputs.build_info }}
+        files: |
+          Release/build-production-linux/Carbon.Linux.Minimal.info
+          Release/build-production-linux/Carbon.Linux.Minimal.tar.gz
