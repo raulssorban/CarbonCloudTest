@@ -53,7 +53,6 @@ jobs:
 
     steps:
     - name: 🏷️ Backup existing release tag
-      if: ${{ github.ref == 'refs/heads/production' }}
       run: |
         if git rev-parse production_build >/dev/null 2>&1; then
           git tag -d productionprev_build || true
@@ -75,15 +74,6 @@ jobs:
     - name: 💤 Sleep for 5 seconds
       run: sleep 5s
       shell: bash
-
-    - name: ⬇️ Download artifacts
-      uses: actions/download-artifact@v3
-      with:
-        path: Release/
-        
-    - name: Display structure of downloaded files
-      run: ls -R
-      working-directory: Release
 
     - name: 🏷️ Update release tag
       uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b
