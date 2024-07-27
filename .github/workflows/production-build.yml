@@ -68,13 +68,6 @@ jobs:
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 8.0.x
-
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: ClementTsang/cargo-action@v0.0.3
-      with:
-        command: build
-        args: -r --target x86_64-unknown-linux-gnu
-        directory: Carbon.Core/Carbon.Native
         
     - name: 🔨 Setup the Carbon build environment
       shell: bash
@@ -111,62 +104,40 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Fetch existing release details
-      id: fetch_release
+    - name: Rename tag
       run: |
-        original_release_tag="production_build"
-        release_data=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-        "https://api.github.com/repos/${{ github.repository }}/releases/tags/${original_release_tag}")
+        # Remove the old tag locally
+        git tag -d production_build
+        # Create a new tag pointing to the same commit
+        git tag productionprev_build
+        # Push the new tag to GitHub
+        git push origin productionprev_build
+        # Delete the old tag from the remote
+        git push origin :refs/tags/production_build
 
-        echo "release_id=$(echo $release_data | jq -r '.id')" >> $GITHUB_ENV
-        echo "release_name=$(echo $release_data | jq -r '.name')" >> $GITHUB_ENV
-        echo "release_body=$(echo $release_data | jq -r '.body')" >> $GITHUB_ENV
-        echo "release_prerelease=$(echo $release_data | jq -r '.prerelease')" >> $GITHUB_ENV
-        echo "release_draft=$(echo $release_data | jq -r '.draft')" >> $GITHUB_ENV
-
-    - name: Create new release
-      id: create_release
+    - name: Delete and recreate release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        new_release_tag="productionprev_build"
-        new_release_name="Production Build (Previous) — v${{ env.release_id }}"
-        release_body="${{ env.release_body }}"
+        # Get the release ID of the old release
+        release_id=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/tags/production_build" | jq -r '.id')
 
-        create_response=$(curl -s -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-        -H "Content-Type: application/json" \
-        -d "{
-          \"tag_name\": \"${new_release_tag}\",
-          \"target_commitish\": \"main\",
-          \"name\": \"${new_release_name}\",
-          \"body\": \"${release_body}\",
-          \"draft\": ${{ env.release_draft }},
-          \"prerelease\": ${{ env.release_prerelease }}
-        }" "https://api.github.com/repos/${{ github.repository }}/releases")
+        # Delete the old release
+        curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
 
-        echo "new_release_id=$(echo $create_response | jq -r '.id')" >> $GITHUB_ENV
-
-    - name: Fetch existing release assets
-      id: fetch_assets
-      run: |
-        assets_url=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-        "https://api.github.com/repos/${{ github.repository }}/releases/${{ env.release_id }}" | jq -r '.assets_url')
-        
-        assets=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" $assets_url | jq -r '.[].url')
-        
-        echo "assets=$assets" >> $GITHUB_ENV
-
-    - name: Download and upload assets to new release
-      run: |
-        for asset_url in ${{ env.assets }}; do
-          asset_name=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" $asset_url | jq -r '.name')
-          asset_download_url=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" $asset_url | jq -r '.browser_download_url')
-          
-          curl -L -o $asset_name $asset_download_url
-
-          curl -s -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Content-Type: $(file -b --mime-type $asset_name)" \
-          --data-binary @$asset_name \
-          "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ env.new_release_id }}/assets?name=$(basename $asset_name)"
-        done
+        # Create a new release with the new tag
+        curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "tag_name": "productionprev_build",
+            "target_commitish": "main",
+            "name": "New Release",
+            "body": "This is the release description",
+            "draft": false,
+            "prerelease": false
+          }' "https://api.github.com/repos/${{ github.repository }}/releases"
 
     - name: 🗑️ Delete existing release tag
       uses: dev-drprasad/delete-tag-and-release@92d94d77429cb0436597047a92369526a5824f50
