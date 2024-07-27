@@ -126,7 +126,7 @@ jobs:
         # Update the release with the new tag
         curl -s -X PATCH -H "Authorization: token $GITHUB_TOKEN" \
           -H "Content-Type: application/json" \
-          -d "{\"tag_name\": \"productionprev_build\"}" \
+          -d "{\"tag_name\": \"productionprev_build\", \"draft\": false, \"prerelease\": true}" \
           "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
 
   # RELEASE --------------------------------------------------------------------
