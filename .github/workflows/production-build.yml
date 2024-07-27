@@ -166,7 +166,7 @@ jobs:
         delete_release: true
         tag_name: production_build
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PAT_ALL_REPO }}
 
     - name: 💤 Sleep for 5 seconds
       run: sleep 5s
