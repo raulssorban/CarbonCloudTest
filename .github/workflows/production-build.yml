@@ -106,15 +106,32 @@ jobs:
     - name: 🐧 Built Carbon on Linux
       shell: bash
       run: |
-        # assuming you are in the branch referencing currently the right new commit:
-        git tag -f productionprev_build
-        
-        # push your new commit:
-        git push 
-        
-        # force push your moved tag:
-        git push origin -f productionprev_build
+        # Remove the old tag locally
+        git tag -d production_build
+        # Create a new tag pointing to the same commit
+        git tag productionprev_build
+        # Push the new tag to GitHub
+        git push origin productionprev_build
+        # Delete the old tag from the remote
+        git push origin :refs/tags/production_build
 
+    - name: Update release tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Get the release data associated with the old tag
+        release_data=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/tags/production_build")
+        
+        # Get the release ID and upload URL from the release data
+        release_id=$(echo "$release_data" | jq -r '.id')
+        upload_url=$(echo "$release_data" | jq -r '.upload_url' | sed 's/{.*}//')
+
+        # Update the release with the new tag
+        curl -s -X PATCH -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "{\"tag_name\": \"productionprev_build\"}" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
 
   # RELEASE --------------------------------------------------------------------
   release-on-schedule:
