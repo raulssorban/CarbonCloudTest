@@ -107,13 +107,13 @@ jobs:
       shell: bash
       run: |
         # Remove the old tag locally
-        git tag -d production_build
+        git tag -d production_build || true
         # Create a new tag pointing to the same commit
-        git tag productionprev_build
+        git tag productionprev_build || true
         # Push the new tag to GitHub
-        git push origin productionprev_build
+        git push origin productionprev_build || true
         # Delete the old tag from the remote
-        git push origin :refs/tags/production_build
+        git push origin :refs/tags/production_build || true
 
     - name: Update release tag
       env:
