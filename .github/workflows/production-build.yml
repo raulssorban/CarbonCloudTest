@@ -160,6 +160,46 @@ jobs:
     if: ${{ (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (github.event_name == 'schedule' && needs.build-linux.outputs.wipe == 'true') }}
 
     steps:
+    - name: 🏷️ Backup existing release tag
+      if: ${{ github.ref == 'refs/heads/production' }}
+      run: |
+        if git rev-parse production_build >/dev/null 2>&1; then
+          git tag -d production_prev_build || true
+          git tag production_prev_build refs/tags/production_build
+          git push origin :refs/tags/production_prev_build
+          git push origin refs/tags/production_prev_build
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 🏷️ Create previous build release
+      if: ${{ github.ref == 'refs/heads/production' }}
+      uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b
+      with:
+        draft: false
+        prerelease: false
+        tag_name: production_prev_build
+        name: 'Production Build (Previous) — v${{ needs.bootstrap.outputs.version }}'
+        body: |
+          This is the previous release build of Carbon based on the `production` branch.
+          This build is kept as a backup.
+
+          ### How to install
+          1. Download the `Carbon.[Windows|Linux].Release` archive from the attachments below.
+          2. Unzip the archive to the root of your Rust Dedicated Server.
+          3. Restart the server and enjoy.
+          
+          ${{ needs.build-linux.outputs.build_info }}
+      files: |
+        Release/build-production-linux/Carbon.Linux.Release.info
+        Release/build-production-linux/Carbon.Linux.Release.tar.gz
+        Release/build-production-windows/Carbon.Windows.Release.info
+        Release/build-production-windows/Carbon.Windows.Release.zip
+        Release/build-production-linux/Carbon.Linux.Minimal.info
+        Release/build-production-linux/Carbon.Linux.Minimal.tar.gz
+        Release/build-production-windows/Carbon.Windows.Minimal.info
+        Release/build-production-windows/Carbon.Windows.Minimal.zip
+
     - name: 🗑️ Delete existing release tag
       uses: dev-drprasad/delete-tag-and-release@92d94d77429cb0436597047a92369526a5824f50
       with:
@@ -187,23 +227,3 @@ jobs:
         draft: false
         prerelease: false
         tag_name: production_build
-        name: 'Production Build — v${{ needs.bootstrap.outputs.version }}'
-        body: |
-          This is a release build of Carbon based on the `production` branch.
-          This build is targeted at the general public.
-
-          ### How to install
-          1. Download the `Carbon.[Windows|Linux].Release` archive from the attachments below.
-          2. Unzip the archive to the root of your Rust Dedicated Server.
-          3. Restart the server and enjoy.
-          
-          ${{ needs.build-linux.outputs.build_info }}
-        files: |
-          Release/build-production-linux/Carbon.Linux.Release.info
-          Release/build-production-linux/Carbon.Linux.Release.tar.gz
-          Release/build-production-windows/Carbon.Windows.Release.info
-          Release/build-production-windows/Carbon.Windows.Release.zip
-          Release/build-production-linux/Carbon.Linux.Minimal.info
-          Release/build-production-linux/Carbon.Linux.Minimal.tar.gz
-          Release/build-production-windows/Carbon.Windows.Minimal.info
-          Release/build-production-windows/Carbon.Windows.Minimal.zip
