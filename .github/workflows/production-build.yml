@@ -95,22 +95,6 @@ jobs:
           Release/Carbon.Linux.Minimal.tar.gz
           Release/Carbon.Linux.Minimal.info
 
-  # RELEASE --------------------------------------------------------------------
-  release-on-schedule:
-    name: 💾 Production Release
-    needs: [ "bootstrap", "build-linux" ]
-    runs-on: ubuntu-latest
-    if: ${{ (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (github.event_name == 'schedule' && needs.build-linux.outputs.wipe == 'true') }}
-
-    steps:
-    - name: 🗑️ Delete previous release tag
-      uses: dev-drprasad/delete-tag-and-release@92d94d77429cb0436597047a92369526a5824f50
-      with:
-        delete_release: false
-        tag_name: productionprev_build
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Rename tag
       run: |
         # Remove the old tag locally
@@ -146,6 +130,15 @@ jobs:
             "prerelease": false
           }' "https://api.github.com/repos/${{ github.repository }}/releases"
 
+
+  # RELEASE --------------------------------------------------------------------
+  release-on-schedule:
+    name: 💾 Production Release
+    needs: [ "bootstrap", "build-linux" ]
+    runs-on: ubuntu-latest
+    if: ${{ (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (github.event_name == 'schedule' && needs.build-linux.outputs.wipe == 'true') }}
+
+    steps:
     - name: 🗑️ Delete existing release tag
       uses: dev-drprasad/delete-tag-and-release@92d94d77429cb0436597047a92369526a5824f50
       with:
