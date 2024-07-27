@@ -95,7 +95,7 @@ jobs:
           Release/Carbon.Linux.Minimal.tar.gz
           Release/Carbon.Linux.Minimal.info
           
-    - name: 🗑️ Delete existing release tag
+    - name: 🗑️ Delete existing previous release tag
       uses: dev-drprasad/delete-tag-and-release@92d94d77429cb0436597047a92369526a5824f50
       with:
         delete_release: true
@@ -103,19 +103,15 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: 🐧 Built Carbon on Linux
+    - name: 🐧 Backup previous production build
       shell: bash
       run: |
-        # Remove the old tag locally
         git tag -d production_build || true
-        # Create a new tag pointing to the same commit
         git tag productionprev_build || true
-        # Push the new tag to GitHub
         git push origin productionprev_build || true
-        # Delete the old tag from the remote
         git push origin :refs/tags/production_build || true
 
-    - name: Update release tag
+    - name: Create previous production build release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
