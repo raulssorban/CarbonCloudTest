@@ -8,9 +8,6 @@ concurrency: build-rust-aux02
 on:
   workflow_dispatch:
 
-  schedule:
-    - cron: '00 19 * * *'
-
 jobs:
   bootstrap:
     name: 🥾 Bootstrap
