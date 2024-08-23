@@ -8,9 +8,6 @@ concurrency: build-rust-staging
 on:
   workflow_dispatch:
 
-  schedule:
-    - cron: "00 19 * * *"
-
 jobs:
   bootstrap:
     name: 🥾 Bootstrap
