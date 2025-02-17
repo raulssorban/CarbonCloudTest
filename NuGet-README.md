@@ -6,7 +6,7 @@ Carbon has all the creature comforts you need to run your server, such as a perm
 Start using Carbon today, download the latest version from our [releases page][production].
 We also provide a [quick start script][quick-start] to get your server running in minutes, available for Windows and Linux.
 asd
-## :blue_book: Documentation
+## :blue_book: Documentationewgwg
 asdsdfs asd sadasdasd
 For more in-depth Carbon documentation, from builds and deployment, check [here][documentation].
 Find all currently available hooks [here][hooks].
