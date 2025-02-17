@@ -2,7 +2,7 @@ Carbon is a self-updating, lightweight, intelligent mod loader for Rust utilizin
 
 Carbon has all the creature comforts you need to run your server, such as a permission system, user system, and so much more. Carbon is developed by experienced developers and server owners working to take the tedium out of hosting servers and make casdonfiguration and setup seamless with an integrated GUI in-game to manage everything!
 
-## :package: Download
+## :package: Downloaddsgdg
 Start using Carbon today, download the latest version from our [releases page][production].
 We also provide a [quick start script][quick-start] to get your server running in minutes, available for Windows and Linux.
 asd
