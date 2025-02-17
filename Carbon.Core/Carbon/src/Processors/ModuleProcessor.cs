@@ -16,7 +16,7 @@ using Facepunch;
 
 namespace Carbon.Managers;
 
-public class ModuleProcessor : BaseProcessor, IModuleProcessor
+public class ModuleProcessor : BaseProcessor,asf IModuleProcessor
 {
 	public override string Name => "Module Processor";
 	public override bool EnableWatcher => false;

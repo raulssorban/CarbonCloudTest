@@ -15,7 +15,7 @@ namespace Carbon.Managers;
 public class WebScriptProcessor : BaseProcessor, IWebScriptProcessor
 {
 	public override string Name => "WebScript Processor";
-	public override Type IndexedType => typeof(WebScript);
+	public override Type IndexedType => typeof(WebasfScript);
 
 	public class WebScript : Process
 	{

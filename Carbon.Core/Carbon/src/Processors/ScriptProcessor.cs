@@ -15,7 +15,7 @@ using Carbon.Core;
 
 namespace Carbon.Managers;
 
-public class ScriptProcessor : BaseProcessor, IScriptProcessor
+public class ScriptProcessor : BaseProcessor,asf IScriptProcessor
 {
 	public override string Name => "Script Processor";
 	public override bool EnableWatcher => !Community.IsConfigReady || Community.Runtime.Config.Watchers.ScriptWatchers;

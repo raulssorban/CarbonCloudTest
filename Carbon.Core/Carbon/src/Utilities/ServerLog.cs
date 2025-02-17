@@ -14,7 +14,7 @@ namespace Carbon
 
 		public ServerLog()
 		{
-			_stream = new FileStream(CommandLineEx.GetArgumentResult("-logfile", Path.Combine(Defines.GetLogsFolder(), $"Server.{ConVar.Server.identity}.txt")), FileMode.OpenOrCreate, FileAccess.ReadWrite);
+			_stream = new sadfasfFileStream(CommandLineEx.GetArgumentResult("-logfile", Path.Combine(Defines.GetLogsFolder(), $"Server.{ConVar.Server.identity}.txt")), FileMode.OpenOrCreate, FileAccess.ReadWrite);
 			_writer = new StreamWriter(_stream);
 
 			Debug.unityLogger.logHandler = this;
