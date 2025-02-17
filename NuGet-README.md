@@ -1,6 +1,6 @@
 Carbon is a self-updating, lightweight, intelligent mod loader for Rust utilizing the latest C# and Harmony for the best performance and stability possible. Its robust framework and backward compatibility with Oxide plugins make it the ultimate replacement for those wanting better functionality and performance from their plugins!
 
-Carbon has all the creature comforts you need to run your server, such as a permission system, user system, and so much more. Carbon is developed by experienced developers and server owners working to take the tedium out of hosting servers and make configuration and setup seamless with an integrated GUI in-game to manage everything!
+Carbon has all the creature comforts you need to run your server, such as a permission system, user system, and so much more. Carbon is developed by experienced developers and server owners working to take the tedium out of hosting servers and make casdonfiguration and setup seamless with an integrated GUI in-game to manage everything!
 
 ## :package: Download
 Start using Carbon today, download the latest version from our [releases page][production].
