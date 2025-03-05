@@ -2,29 +2,21 @@
 using System;
 using System.Collections;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using Carbon.Base;
 using Carbon.Components;
 using Carbon.Contracts;
 using Carbon.Core;
 using Carbon.Extensions;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Managers;
-afs
+
 public class ZipDevScriptProcessor : BaseProcessor, IZipDevScriptProcessor
 {
 	public override string Name => "ZipDebugScript Processor";
 	public override bool EnableWatcher => !Community.IsConfigReady || Community.Runtime.Config.Watchers.ZipScriptWatchers;
 	public override string Folder => Defines.GetZipDevFolder();
 	public override string Extension => ".cs";
+	public override float Rate => Community.Runtime.Config.Processors.ZipScriptProcessingRate;
 	public override Type IndexedType => typeof(ZipDevScript);
 
 	public override void Start()
@@ -170,7 +162,7 @@ public class ZipDevScriptProcessor : BaseProcessor, IZipDevScriptProcessor
 
 			try
 			{
-				ModLoader.GetOrCreateFailedCompilation(File).Clear();
+				ModLoader.GetCompilationResult(File).Clear();
 
 				if (!OsEx.Folder.Exists(File))
 				{
@@ -211,10 +203,6 @@ public class ZipDevScriptProcessor : BaseProcessor, IZipDevScriptProcessor
 
 	public class ZipDevScriptParser : Parser, IBaseProcessor.IParser
 	{
-		internal const string QuoteReplacer = "[CARBONQUOTE]";
-		internal const string Quote = "\\\"";
-		internal const string NewLineReplacer = "[CARBONNEWLINE]";
-		internal const string NewLine = "\\n";
 		internal const string Harmony = "Harmony";
 		internal const string FOOT = "FindObjectsOfType";
 
@@ -224,16 +212,6 @@ public class ZipDevScriptProcessor : BaseProcessor, IZipDevScriptProcessor
 			{
 				try
 				{
-					#region Handle Unicode & Quote Escaping
-
-					// if (input.Contains("\\u"))
-					// {
-					// 	output = Regex.Unescape(input.Replace(Quote, QuoteReplacer).Replace(NewLine, NewLineReplacer)).Replace(QuoteReplacer, Quote).Replace(NewLineReplacer, NewLine);
-					// }
-					// else output = input;
-
-					#endregion
-
 					if (input.Contains(Harmony))
 					{
 						Logger.Warn($" Warning! '{Path.GetFileNameWithoutExtension(file)}' uses Harmony. That may cause instability, use at your own discretion!");

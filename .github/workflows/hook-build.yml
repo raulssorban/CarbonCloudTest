@@ -1,7 +1,3 @@
-###
-### Copyright (c) 2024 Carbon Community 
-### All rights reserved
-###
 name: Protocol Hooks Build
 concurrency: build-protocol-hooks
 
@@ -11,7 +7,7 @@ on:
       protocol:
         description: 'Carbon Protocol'
         required: true
-        default: '2024.MM.DD.0'
+        default: '2025.MM.DD.0'
         type: string
 
       carbon_branch:
@@ -26,6 +22,7 @@ on:
         - rust_beta/staging
         - rust_beta/aux01
         - rust_beta/aux02
+        - rust_beta/aux03
 
       rust_branch:
         description: 'Rust Branch'
@@ -38,6 +35,7 @@ on:
         - staging
         - aux01
         - aux02
+        - aux03
 
       debug:
         description: 'Debug Hooks'
@@ -70,7 +68,7 @@ env:
 jobs:
   bootstrap:
     name: 🥾 Bootstrap
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: 🔗 Checkout source code from github
@@ -106,7 +104,7 @@ jobs:
         
         set ROOT=%GITHUB_WORKSPACE%\Carbon.Core\Carbon.Hooks\Carbon.Hooks.Internal\Buildroot\Scripts
 
-        call %GITHUB_WORKSPACE%\Tools\Build\win\bootstrap.bat
+        call %GITHUB_WORKSPACE%\Tools\Build\win\bootstrap.bat %RUST_BRANCH%
         
         if %DEBUG_BUILD% EQU true (
             cd %ROOT%
@@ -128,7 +126,7 @@ jobs:
         call discord.bat %RUST_BRANCH% %PROTOCOL%
         
     - name: ⬆️ Artifacts - Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: FTP Output
         path: |

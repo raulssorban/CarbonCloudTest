@@ -2,19 +2,11 @@
 using System.Collections;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using Carbon.Base;
 using Carbon.Components;
 using Carbon.Contracts;
 using Carbon.Core;
 using Carbon.Extensions;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.asfffas
- *
- */
 
 namespace Carbon.Managers;
 
@@ -24,6 +16,7 @@ public class ZipScriptProcessor : BaseProcessor, IZipScriptProcessor
 	public override bool EnableWatcher => !Community.IsConfigReady || Community.Runtime.Config.Watchers.ZipScriptWatchers;
 	public override string Folder => Defines.GetScriptsFolder();
 	public override string Extension => ".cszip";
+	public override float Rate => Community.Runtime.Config.Processors.ZipScriptProcessingRate;
 	public override Type IndexedType => typeof(ZipScript);
 
 	public override void Start()
@@ -117,7 +110,7 @@ public class ZipScriptProcessor : BaseProcessor, IZipScriptProcessor
 		{
 			try
 			{
-				ModLoader.GetOrCreateFailedCompilation(File).Clear();
+				ModLoader.GetCompilationResult(File, true);
 
 				if (!OsEx.File.Exists(File))
 				{

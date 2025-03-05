@@ -1,7 +1,3 @@
-###
-### Copyright (c) 2024 Carbon Community 
-### All rights reserved
-###
 name: Rust (Release) Build
 concurrency: build-rust-release
 
@@ -11,7 +7,7 @@ on:
 jobs:
   bootstrap:
     name: 🥾 Bootstrap
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     outputs:
       date:    ${{ steps.step1.outputs.date }}
@@ -27,6 +23,8 @@ jobs:
 
       - name: 🔗 Checkout source code from github
         uses: actions/checkout@v3
+        with:
+          ref: rust_beta/release
           
       - name: 📅 Prepare the environment
         id: step1
@@ -42,7 +40,7 @@ jobs:
   build-linux:
     name: 🐧 Linux
     needs: bootstrap
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     continue-on-error: true
 
     outputs:
@@ -54,6 +52,7 @@ jobs:
     - name: 🔗 Checkout source code from github
       uses: actions/checkout@v3
       with:
+        ref: rust_beta/release
         token: ${{ secrets.PAT_ALL_REPO }}
         submodules: recursive
 
@@ -69,6 +68,13 @@ jobs:
         args: -r --target x86_64-unknown-linux-gnu
         directory: Carbon.Core/Carbon.Native
         
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: ClementTsang/cargo-action@v0.0.3
+      with:
+        command: build
+        args: --target x86_64-unknown-linux-gnu --profile prod
+        directory: Carbon.Core/Carbon.Native
+
     - name: 🔨 Setup the Carbon build environment
       shell: bash
       run: |
@@ -83,14 +89,17 @@ jobs:
       shell: bash
       run: |
         export VERSION=${{ needs.bootstrap.outputs.version }}
+        ${GITHUB_WORKSPACE}/Tools/Build/linux/build.sh ReleaseUnix RUST_RELEASE "rustbeta_release"
         ${GITHUB_WORKSPACE}/Tools/Build/linux/build.sh DebugUnix RUST_RELEASE "rustbeta_release"
         ${GITHUB_WORKSPACE}/Tools/Build/linux/build.sh MinimalUnix RUST_RELEASE "rustbeta_release"
         
     - name: ⬆️ Upload the artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-release-linux
         path: |
+          Release/Carbon.Linux.Release.tar.gz
+          Release/Carbon.Linux.Release.info
           Release/Carbon.Linux.Debug.tar.gz
           Release/Carbon.Linux.Debug.info
           Release/Carbon.Linux.Minimal.tar.gz
@@ -107,6 +116,7 @@ jobs:
     - name: 🔗 Checkout source code from github
       uses: actions/checkout@v3
       with:
+        ref: rust_beta/release
         token: ${{ secrets.PAT_ALL_REPO }}
         submodules: recursive
 
@@ -136,14 +146,17 @@ jobs:
       shell: cmd
       run: |
         set VERSION=${{ needs.bootstrap.outputs.version }}
+        call %GITHUB_WORKSPACE%\Tools\Build\win\build.bat Release RUST_RELEASE rustbeta_release
         call %GITHUB_WORKSPACE%\Tools\Build\win\build.bat Debug RUST_RELEASE rustbeta_release
         call %GITHUB_WORKSPACE%\Tools\Build\win\build.bat Minimal RUST_RELEASE rustbeta_release
 
     - name: ⬆️ Upload the artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-release-windows
         path: |
+          Release/Carbon.Windows.Release.zip
+          Release/Carbon.Windows.Release.info
           Release/Carbon.Windows.Debug.zip
           Release/Carbon.Windows.Debug.info
           Release/Carbon.Windows.Minimal.zip
@@ -153,7 +166,7 @@ jobs:
   release-on-schedule:
     name: 💾 Rust (Release) Release
     needs: [ "bootstrap", "build-linux", "build-windows" ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     # only release if triggered by the scheduler
     # or if manually triggered by a developer
@@ -172,7 +185,7 @@ jobs:
       shell: bash
 
     - name: ⬇️ Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: Release
 
@@ -181,19 +194,15 @@ jobs:
       working-directory: Release
 
     - name: 🏷️ Update release tag
-      uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b
+      uses: softprops/action-gh-release@a92196038060e0c673cf3ba5b98710dd716731df
       with:
         draft: false
         prerelease: true
         tag_name: rustbeta_release_build
         name: 'Rust (Release) Build — v${{ needs.bootstrap.outputs.version }}'
         body: |
-          This is a manually triggered development build of Carbon based on the `develop` branch.
-          This build might and probably will be very unstable and its sole purpose is for testing and/or exploring Rust's future update features in a modded environment.
-                  
-          This build is targeted at developers or testers.
-          The general public is advised to use one of the [stable] builds.
-          Since it's manually triggered, we're confident you should use this build to test out the latest Carbon changes.
+          This is a manually triggered development build of Carbon based on the `rust_beta/release` branch.
+          This build is polished and production-ready, and is the equivalent of what's to come in the upcoming `production` branch.
 
           ### How to install
           1. Download the `Carbon.[Windows|Linux].Debug` archive from the attachments below.
@@ -201,9 +210,11 @@ jobs:
           3. Restart the server and enjoy.
           
           ${{ needs.build-linux.outputs.build_info }}
-
-          [stable]: https://github.com/CarbonCommunity/Carbon.Core/releases/latest
         files: |
+          Release/build-release-linux/Carbon.Linux.Release.info
+          Release/build-release-linux/Carbon.Linux.Release.tar.gz
+          Release/build-release-windows/Carbon.Windows.Release.info
+          Release/build-release-windows/Carbon.Windows.Release.zip
           Release/build-release-linux/Carbon.Linux.Debug.info
           Release/build-release-linux/Carbon.Linux.Debug.tar.gz
           Release/build-release-windows/Carbon.Windows.Debug.info

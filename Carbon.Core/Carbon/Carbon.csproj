@@ -2,7 +2,6 @@
 	<PropertyGroup>
 		<Product>Carbon</Product>
 		<OutputType>Library</OutputType>
-		<ProjectGuid>{DB7AC4B9-E0F3-4E8F-B977-DD32709359A4}</ProjectGuid>
 		<Title>Carbon</Title>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 		<PackageId>Carbon</PackageId>
@@ -17,16 +16,8 @@
 	<Import Project="$(SolutionDir)\.msbuild\AssemblyName.props" />
 
 	<ItemGroup>
-		<PackageReference Include="Mono.Cecil" Version="0.11.5" />
 		<ProjectReference Include="$(SolutionDir)\Carbon.Components\Carbon.Common\Carbon.Common.csproj" Private="false" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <PackageReference Update="Microsoft.Unity.Analyzers" Version="1.17.0">
-	    <PrivateAssets>all</PrivateAssets>
-	    <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-	  </PackageReference>
-	  <PackageReference Update="Roslynator.CSharp" Version="4.9.0" />
+		<ProjectReference Include="$(SolutionDir)\Carbon.Components\Carbon.Common.Client\Carbon.Common.Client.V2.csproj" />
 	</ItemGroup>
 
 	<Target Name="CustomRelease" AfterTargets="Build" DependsOnTargets="PrepareRelease">

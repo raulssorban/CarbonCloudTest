@@ -4,20 +4,13 @@ using API.Commands;
 using Carbon.Base;
 using Carbon.Contracts;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Managers;
 
 public class CarbonProcessor : BaseProcessor, ICarbonProcessor
 {
 	public override string Name => "Carbon Processor";
 
-	public override void OnDestroy()asf { }
+	public override void OnDestroy() { }
 	public override void Dispose() { }
 
 	public List<Action> CurrentFrameQueue { get; set; } = new();

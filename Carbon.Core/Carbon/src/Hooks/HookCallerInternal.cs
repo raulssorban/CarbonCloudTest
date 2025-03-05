@@ -8,22 +8,19 @@ using Oxide.Core.Plugins;
 using UnityEngine;
 using static Carbon.Base.BaseHookable;
 
-/*
- *dfssd
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.asfasfa
- *
- */ sadsa
-
 namespace Carbon.Hooks;
 
 public class HookCallerInternal : HookCallerCommon
 {
 	public override object[] AllocateBuffer(int count)
 	{
-		if (_argumentBuffer.TryGetValue(count, out var pool)) return pool.Take();
+		if (_argumentBuffer.TryGetValue(count, out var pool))
+		{
+			return pool.Rent();
+		}
+
 		_argumentBuffer[count] = pool = new HookArgPool(count, 15);
-		return pool.Take();
+		return pool.Rent();
 	}
 	public override object[] RescaleBuffer(object[] oldBuffer, int newScale, CachedHook hook)
 	{
@@ -106,7 +103,7 @@ public class HookCallerInternal : HookCallerCommon
 		}
 
 		var result = (object)null;
-		var conflicts = Pool.GetList<Conflict>();
+		var conflicts = Pool.Get<List<Conflict>>();
 		var hasRescaledBuffer = false;
 
 		if (hookable.InternalCallHookOverriden)
@@ -173,7 +170,7 @@ public class HookCallerInternal : HookCallerCommon
 					hook?.OnLagSpike(hookable);
 				}
 
-				Analytics.plugin_time_warn(readableHook, basePlugin, afterHookTimeMs, totalMemory, hook, hookable, wasLagSpike);
+				Analytics.plugin_time_warn(readableHook, basePlugin, afterHookTimeMs, totalMemory, wasLagSpike, hook, hookable);
 			}
 
 			HookCaller.ConflictCheck(conflicts, ref result, hookId);
@@ -205,10 +202,7 @@ public class HookCallerInternal : HookCallerCommon
 					{
 						var exception = ex.InnerException ?? ex;
 						var readableHook = HookStringPool.GetOrAdd(hookId);
-						Carbon.Logger.Error(
-							$"Failed to call hook '{readableHook}' on plugin '{hookable.Name} v{hookable.Version}'",
-							exception
-						);
+						Logger.Error($"Failed to call hook '{readableHook}' on plugin '{hookable.Name} v{hookable.Version}'", exception);
 					}
 				}
 			}
@@ -246,10 +240,7 @@ public class HookCallerInternal : HookCallerCommon
 				{
 					var exception = ex.InnerException ?? ex;
 					var readableHook = HookStringPool.GetOrAdd(hookId);
-					Carbon.Logger.Error(
-						$"Failed to call hook '{readableHook}' on plugin '{hookable.Name} v{hookable.Version}'",
-						exception
-					);
+					Carbon.Logger.Error($"Failed to call hook '{readableHook}' on plugin '{hookable.Name} v{hookable.Version}'", exception);
 				}
 
 				hookable.TrackEnd();
@@ -275,7 +266,7 @@ public class HookCallerInternal : HookCallerCommon
 							hook.OnLagSpike(hookable);
 						}
 
-						Analytics.plugin_time_warn(readableHook, basePlugin, afterHookTimeMs, totalMemory, hook, hookable, wasLagSpike);
+						Analytics.plugin_time_warn(readableHook, basePlugin, afterHookTimeMs, totalMemory, wasLagSpike, hook, hookable);
 					}
 				}
 
@@ -295,7 +286,7 @@ public class HookCallerInternal : HookCallerCommon
 				HookCaller.Caller.ReturnBuffer(buffer);
 			}
 
-			Pool.FreeList(ref conflicts);
+			Pool.FreeUnmanaged(ref conflicts);
 		}
 
 		return result;
@@ -321,8 +312,6 @@ public class HookCallerInternal : HookCallerCommon
 
 	internal static bool SequenceEqual(Type[] source, object[] target)
 	{
-		var equal = true;
-
 		for(int i = 0; i < source.Length; i++)
 		{
 			var sourceItem = source[i];
@@ -332,11 +321,10 @@ public class HookCallerInternal : HookCallerCommon
 				sourceItem != targetItem &&
 				!sourceItem.IsAssignableFrom(targetItem))
 			{
-				equal = false;
-				break;
+				return false;
 			}
 		}
 
-		return equal;
+		return true;
 	}
 }

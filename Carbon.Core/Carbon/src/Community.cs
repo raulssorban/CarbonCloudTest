@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
 using API.Events;
 using Carbon.Components;
 using Carbon.Core;
@@ -12,13 +11,8 @@ using Oxide.Core;
 using System.Linq;
 using API.Commands;
 using UnityEngine;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
+using Carbon.Client;
+using Carbon.Jobs;
 
 namespace Carbon;
 
@@ -86,7 +80,6 @@ public class CommunityInternal : Community
 
 			var gameObject = new GameObject("Processors");
 			ScriptProcessor = gameObject.AddComponent<ScriptProcessor>();
-			WebScriptProcessor = gameObject.AddComponent<WebScriptProcessor>();
 			ZipScriptProcessor = gameObject.AddComponent<ZipScriptProcessor>();
 #if DEBUG
 			ZipDevScriptProcessor = gameObject.AddComponent<ZipDevScriptProcessor>();
@@ -95,9 +88,11 @@ public class CommunityInternal : Community
 			HookManager = gameObject.AddComponent<PatchManager>();
 			ModuleProcessor = gameObject.AddComponent<ModuleProcessor>();
 			Entities = new Entities();
+			CarbonClient = new CarbonClientManager();
 		}
 
 		_registerProcessors();
+		ScriptCompilationThread._injectPatchedReferences();
 	}
 	internal void _installTest()
 	{
@@ -107,7 +102,6 @@ public class CommunityInternal : Community
 	internal void _registerProcessors()
 	{
 		if (ScriptProcessor != null) ScriptProcessor?.Start();
-		if (WebScriptProcessor != null) WebScriptProcessor?.Start();
 		if (ZipScriptProcessor != null) ZipScriptProcessor?.Start();
 #if DEBUG
 		if (ZipDevScriptProcessor != null) ZipDevScriptProcessor?.Start();
@@ -123,7 +117,6 @@ public class CommunityInternal : Community
 		try
 		{
 			if (ScriptProcessor != null) ScriptProcessor?.Dispose();
-			if (WebScriptProcessor != null) WebScriptProcessor?.Dispose();
 			if (ZipScriptProcessor != null) ZipScriptProcessor?.Dispose();
 #if DEBUG
 			if (ZipDevScriptProcessor != null) ZipDevScriptProcessor?.Dispose();
@@ -148,15 +141,18 @@ public class CommunityInternal : Community
 	{
 		base.Initialize();
 
-		if (IsInitialized) return;
-
-		Compat.Init();
+		if (IsInitialized)
+		{
+			return;
+		}
 
 		HookCaller.Caller = new HookCallerInternal();
 
 		LoadConfig();
-
 		LoadMonoProfilerConfig();
+		LoadClientConfig();
+
+		Compat.Init();
 
 		Events.Trigger(CarbonEvent.CarbonStartup, EventArgs.Empty);
 
@@ -174,9 +170,9 @@ public class CommunityInternal : Community
 			ClearCommands();
 			_installCore();
 			ModuleProcessor.Init();
+			CarbonClient.Init();
 
-			Events.Trigger(
-				CarbonEvent.HookValidatorRefreshed, EventArgs.Empty);
+			Events.Trigger(CarbonEvent.HookValidatorRefreshed, EventArgs.Empty);
 		});
 
 		Events.Subscribe(CarbonEvent.HookValidatorRefreshed, args =>
@@ -209,6 +205,8 @@ public class CommunityInternal : Community
 		Logger.Log($"Loaded.");
 		Events.Trigger(CarbonEvent.CarbonStartupComplete, EventArgs.Empty);
 
+		Client.Client.Init();
+
 		Entities.Init();
 	}
 	public override void Uninitialize()
@@ -219,8 +217,7 @@ public class CommunityInternal : Community
 
 			_uninstallProcessors();
 			ClearCommands(all: true);
-
-			ClearPlugins(full: true);
+			ClearPlugins(all: true);
 			ModLoader.Packages.Clear();
 			UnityEngine.Debug.Log($"Unloaded Carbon.");
 

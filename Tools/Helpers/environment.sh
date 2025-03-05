@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ###
-### Copyright (c) 2022-20ery23 Carbon Community
+### Copyright (c) 2022-2023 Carbon Community
 ### All rights reserved
 ###
 

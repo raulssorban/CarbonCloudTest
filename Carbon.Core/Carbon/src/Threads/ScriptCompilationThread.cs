@@ -15,17 +15,10 @@ using Carbon.Core;
 using Carbon.Extensions;
 using Carbon.Pooling;
 using Carbon.Profiler;
-using Microsoft.CodeAnalysis;asf
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Emit;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Jobs;
 
@@ -47,18 +40,16 @@ public class ScriptCompilationThread : BaseThreadedJob
 	public List<CompilerException> Exceptions = new();
 	public List<CompilerException> Warnings = new();
 
-	#region Internals
-
-	internal const string _internalCallHookPattern = @"override object InternalCallHook";
-	internal const string _partialPattern = @" partial ";
-	internal Stopwatch _stopwatch;
-	internal List<ClassDeclarationSyntax> ClassList = new();
-	internal static EmitOptions _emitOptions = new(debugInformationFormat: DebugInformationFormat.Embedded);
-	internal static ConcurrentDictionary<string, byte[]> _compilationCache = new();
-	internal static ConcurrentDictionary<string, byte[]> _extensionCompilationCache = new();
-	internal static Dictionary<string, PortableExecutableReference> _referenceCache = new();
-	internal static Dictionary<string, PortableExecutableReference> _extensionReferenceCache = new();
-	internal static readonly string[] _libraryDirectories =
+	private const string _internalCallHookPattern = @"override object InternalCallHook";
+	private const string _partialPattern = @" partial ";
+	private Stopwatch _stopwatch;
+	private List<ClassDeclarationSyntax> ClassList = new();
+	private static EmitOptions _emitOptions = new(debugInformationFormat: DebugInformationFormat.Embedded);
+	private static ConcurrentDictionary<string, byte[]> _compilationCache = new();
+	private static ConcurrentDictionary<string, byte[]> _extensionCompilationCache = new();
+	private static Dictionary<string, PortableExecutableReference> _referenceCache = new();
+	private static Dictionary<string, PortableExecutableReference> _extensionReferenceCache = new();
+	private static readonly string[] _libraryDirectories =
 	[
 		Defines.GetLibFolder(),
 		Defines.GetManagedFolder(),
@@ -67,7 +58,7 @@ public class ScriptCompilationThread : BaseThreadedJob
 		Defines.GetExtensionsFolder()
 	];
 
-	internal static byte[] _getPlugin(string name)
+	private static byte[] _getPlugin(string name)
 	{
 		name = name.Replace(" ", string.Empty);
 
@@ -81,7 +72,7 @@ public class ScriptCompilationThread : BaseThreadedJob
 
 		return null;
 	}
-	internal static byte[] _getExtensionPlugin(string name)
+	private static byte[] _getExtensionPlugin(string name)
 	{
 		foreach (var extension in _extensionCompilationCache)
 		{
@@ -93,7 +84,7 @@ public class ScriptCompilationThread : BaseThreadedJob
 
 		return null;
 	}
-	internal static void _overridePlugin(string name, byte[] pluginAssembly)
+	private static void _overridePlugin(string name, byte[] pluginAssembly)
 	{
 		name = name.Replace(" ", "");
 
@@ -109,7 +100,7 @@ public class ScriptCompilationThread : BaseThreadedJob
 		Array.Clear(plugin, 0, plugin.Length);
 		try { _compilationCache[name] = pluginAssembly; } catch { }
 	}
-	internal static void _overrideExtensionPlugin(string name, byte[] pluginAssembly)
+	private static void _overrideExtensionPlugin(string name, byte[] pluginAssembly)
 	{
 		if (pluginAssembly == null) return;
 
@@ -128,7 +119,16 @@ public class ScriptCompilationThread : BaseThreadedJob
 		if (_extensionCompilationCache.ContainsKey(name)) _extensionCompilationCache.TryRemove(name, out _);
 		if (_extensionReferenceCache.ContainsKey(name)) _extensionReferenceCache.Remove(name);
 	}
-	internal void _injectReference(string id, string name, List<MetadataReference> references, string[] directories, bool direct = false, bool allowCache = true)
+	internal static void _injectPatchedReferences()
+	{
+		foreach (var assembly in Community.Runtime.Config.Publicizer.PublicizedAssemblies)
+		{
+			var correctedName = assembly.Replace(".dll", string.Empty);
+			using var stream = new MemoryStream(API.Assembly.PatchedAssemblies.AssemblyCache[correctedName]);
+			_referenceCache[correctedName] = PortableExecutableReference.CreateFromStream(stream);
+		}
+	}
+	private void _injectReference(string id, string name, List<MetadataReference> references, string[] directories, bool direct = false, bool allowCache = true)
 	{
 		if (allowCache && _referenceCache.TryGetValue(name, out var reference))
 		{
@@ -146,7 +146,10 @@ public class ScriptCompilationThread : BaseThreadedJob
 				{
 					foreach (var file in OsEx.Folder.GetFilesWithExtension(directory, "dll"))
 					{
-						if (!file.Contains(name)) continue;
+						if (!file.Contains(name))
+						{
+							continue;
+						}
 						raw = OsEx.File.ReadBytes(file);
 						found = true;
 						break;
@@ -164,13 +167,12 @@ public class ScriptCompilationThread : BaseThreadedJob
 
 			using var mem = new MemoryStream(raw);
 			var processedReference = MetadataReference.CreateFromStream(mem);
-
 			references.Add(processedReference);
 			_referenceCache[name] = processedReference;
 			Logger.Debug(id, $"Added common reference '{name}'", 4);
 		}
 	}
-	internal void _injectExtensionReference(string name, List<MetadataReference> references)
+	private void _injectExtensionReference(string name, List<MetadataReference> references)
 	{
 		if (_extensionReferenceCache.TryGetValue(name, out var reference))
 		{
@@ -188,12 +190,12 @@ public class ScriptCompilationThread : BaseThreadedJob
 			_extensionReferenceCache.Add(name, processedReference);
 		}
 	}
-	internal List<MetadataReference> _addReferences()
+	private List<MetadataReference> _addReferences()
 	{
 		var references = new List<MetadataReference>();
 		var id = Path.GetFileNameWithoutExtension(InitialSource.FilePath);
 
-		_injectReference(id, "0Harmony", references, _libraryDirectories);
+		_injectReference(id, "0Harmony", references, _libraryDirectories, true);
 
 		foreach (var item in Community.Runtime.AssemblyEx.RefWhitelist)
 		{
@@ -239,13 +241,16 @@ public class ScriptCompilationThread : BaseThreadedJob
 		return references;
 	}
 
-	#endregion
-
 	public class CompilerException : Exception
 	{
 		public string FilePath;
 		public CompilerError Error;
-		public CompilerException(string filePath, CompilerError error) { FilePath = filePath; Error = error; }
+
+		public CompilerException(string filePath, CompilerError error)
+		{
+			FilePath = filePath;
+			Error = error;
+		}
 
 		public override string ToString()
 		{
@@ -278,6 +283,11 @@ public class ScriptCompilationThread : BaseThreadedJob
 		{
 			try
 			{
+				if (_referenceCache.ContainsKey(reference))
+				{
+					continue;
+				}
+
 				var extensionFile = Path.Combine(Defines.GetExtensionsFolder(), $"{reference}.dll");
 				if (OsEx.File.Exists(extensionFile))
 				{
@@ -320,8 +330,8 @@ public class ScriptCompilationThread : BaseThreadedJob
 			Exceptions.Clear();
 			Warnings.Clear();
 
-			var trees = Facepunch.Pool.GetList<SyntaxTree>();
-			var conditionals = Facepunch.Pool.GetList<string>();
+			var trees = Facepunch.Pool.Get<List<SyntaxTree>>();
+			var conditionals = Facepunch.Pool.Get<List<string>>();
 
 			_stopwatch = Facepunch.Pool.Get<Stopwatch>();
 
@@ -351,6 +361,8 @@ public class ScriptCompilationThread : BaseThreadedJob
 			conditionals.Add("RUST_AUX01");
 #elif RUST_AUX02
 			conditionals.Add("RUST_AUX02");
+#elif RUST_AUX03
+			conditionals.Add("RUST_AUX03");
 #endif
 
 			string pdbFilename =
@@ -383,8 +395,7 @@ public class ScriptCompilationThread : BaseThreadedJob
 
 				tree = tree.WithRootAndOptions(root, parseOptions);
 
-				if (HookCaller.FindPluginInfo(root, out var @namespace, out var namespaceIndex, out var classIndex,
-					    ClassList))
+				if (HookCaller.FindPluginInfo(root, out var @namespace, out var namespaceIndex, out var classIndex, ClassList))
 				{
 					var @class = ClassList[0];
 
@@ -421,8 +432,12 @@ public class ScriptCompilationThread : BaseThreadedJob
 					pdbFilename, ClassList);
 
 				InternalCallHookGenTime = _stopwatch.Elapsed;
-				InternalCallHookSource = partialTree.NormalizeWhitespace().ToFullString();
-				trees.Add(partialTree.SyntaxTree);
+
+				if (partialTree != null)
+				{
+					InternalCallHookSource = partialTree.NormalizeWhitespace().ToFullString();
+					trees.Add(partialTree.SyntaxTree);
+				}
 			}
 
 			var options = new CSharpCompilationOptions(
@@ -431,7 +446,7 @@ public class ScriptCompilationThread : BaseThreadedJob
 #if DEBUG
 				Debugger.IsAttached ? OptimizationLevel.Debug : OptimizationLevel.Release,
 #else
-					OptimizationLevel.Release,
+				OptimizationLevel.Release,
 #endif
 				deterministic: true, warningLevel: 4,
 				allowUnsafe: true
@@ -439,19 +454,27 @@ public class ScriptCompilationThread : BaseThreadedJob
 
 			_stopwatch.Restart();
 
-			var compilation = CSharpCompilation.Create(
-				$"Script.{InitialSource.FileName}.{Guid.NewGuid():N}", trees, references, options);
+			if (InitialSource == null)
+			{
+				Dispose();
+				return;
+			}
+
+			var compilation = CSharpCompilation.Create($"Script.{InitialSource.FileName}.{Guid.NewGuid():N}", trees, references, options);
 
 			using (var dllStream = new MemoryStream())
 			{
 				var emit = compilation.Emit(dllStream, options: _emitOptions);
 
-				var errors = Facepunch.Pool.GetList<string>();
-				var warnings = Facepunch.Pool.GetList<string>();
+				var errors = Facepunch.Pool.Get<List<string>>();
+				var warnings = Facepunch.Pool.Get<List<string>>();
 
 				foreach (var error in emit.Diagnostics)
 				{
-					if (errors.Contains(error.Id) || warnings.Contains(error.Id)) continue;
+					if (errors.Contains(error.Id) || warnings.Contains(error.Id))
+					{
+						continue;
+					}
 
 					var span = error.Location.GetMappedLineSpan().Span;
 
@@ -480,53 +503,47 @@ public class ScriptCompilationThread : BaseThreadedJob
 					}
 				}
 
-				Facepunch.Pool.FreeList(ref errors);
-				Facepunch.Pool.FreeList(ref warnings);
+				Facepunch.Pool.FreeUnmanaged(ref errors);
+				Facepunch.Pool.FreeUnmanaged(ref warnings);
 
 				if (emit.Success)
 				{
 					var assembly = dllStream.ToArray();
 					if (assembly != null)
 					{
-						if (IsExtension) _overrideExtensionPlugin(InitialSource.ContextFilePath, assembly);
+						if (IsExtension)
+						{
+							_overrideExtensionPlugin(InitialSource.ContextFilePath, assembly);
+						}
+
 						_overridePlugin(Path.GetFileNameWithoutExtension(InitialSource.ContextFilePath), assembly);
 						Assembly = Assembly.Load(assembly);
 
 						try
 						{
-							MonoProfiler.TryStartProfileFor(MonoProfilerConfig.ProfileTypes.Plugin, Assembly,
-								Path.GetFileNameWithoutExtension(string.IsNullOrEmpty(InitialSource.ContextFileName)
-									? InitialSource.FileName
-									: InitialSource.ContextFileName), true);
-						}
-						catch (Exception ex)
-						{
-							Logger.Error($"Couldn't mark assembly for profiling", ex);
-						}
-
-						try
-						{
-							Assemblies.Plugins.Update(Path.GetFileNameWithoutExtension(string.IsNullOrEmpty(InitialSource.ContextFileName)
+							var name = Path.GetFileNameWithoutExtension(string.IsNullOrEmpty(InitialSource.ContextFileName)
 								? InitialSource.FileName
-								: InitialSource.ContextFileName), Assembly, string.IsNullOrEmpty(InitialSource.ContextFilePath) ? InitialSource.FilePath : InitialSource.ContextFilePath);
+								: InitialSource.ContextFileName);
+
+							var isProfiled = MonoProfiler.TryStartProfileFor(MonoProfilerConfig.ProfileTypes.Plugin, Assembly, name, true);
+							Assemblies.Plugins.Update(name, Assembly, string.IsNullOrEmpty(InitialSource.ContextFilePath) ? InitialSource.FilePath : InitialSource.ContextFilePath, isProfiled);
 						}
 						catch (Exception ex)
 						{
 							Logger.Error($"Couldn't cache assembly in Carbon's global database", ex);
 						}
-
 					}
 				}
 			}
 
 			references.Clear();
 			references = null;
-			Facepunch.Pool.FreeList(ref conditionals);
-			Facepunch.Pool.FreeList(ref trees);
+			Facepunch.Pool.FreeUnmanaged(ref conditionals);
+			Facepunch.Pool.FreeUnmanaged(ref trees);
 
 			CompileTime = _stopwatch.Elapsed;
 			_stopwatch.Reset();
-			Facepunch.Pool.Free(ref _stopwatch);
+			Facepunch.Pool.FreeUnsafe(ref _stopwatch);
 
 			if (Assembly == null) return;
 

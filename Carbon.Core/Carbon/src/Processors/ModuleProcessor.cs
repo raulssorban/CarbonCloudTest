@@ -7,26 +7,21 @@ using Carbon.Base.Interfaces;
 using Carbon.Contracts;
 using Facepunch;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Managers;
 
-public class ModuleProcessor : BaseProcessor,asf IModuleProcessor
+public class ModuleProcessor : BaseProcessor, IModuleProcessor
 {
 	public override string Name => "Module Processor";
 	public override bool EnableWatcher => false;
 
-	List<BaseHookable> IModuleProcessor.Modules { get => _modules; }
+	List<BaseHookable> IModuleProcessor.Modules { get; } = new(200);
 
-	internal List<BaseHookable> _modules { get; set; } = new(200);
+	internal List<BaseHookable> _modules;
 
 	public void Init()
 	{
+		_modules = (this as IModuleProcessor).Modules;
+
 		// TODO ---------------------------------------------------------------
 		// This needs to go into the ModuleManager. Each module must implement
 		// the ICarbonModule. Currently is just a workaround to be compatible
@@ -48,7 +43,7 @@ public class ModuleProcessor : BaseProcessor,asf IModuleProcessor
 		{
 			if (e is ModuleEventArgs m)
 			{
-				var pool = Pool.GetList<BaseHookable>();
+				var pool = Pool.Get<List<BaseHookable>>();
 				pool.AddRange(_modules);
 
 				foreach (var module in pool)
@@ -62,7 +57,7 @@ public class ModuleProcessor : BaseProcessor,asf IModuleProcessor
 					}
 				}
 
-				Pool.FreeList(ref pool);
+				Pool.FreeUnmanaged(ref pool);
 			}
 		});
 
@@ -135,7 +130,7 @@ public class ModuleProcessor : BaseProcessor,asf IModuleProcessor
 	}
 	public void Build(string context, params Type[] types)
 	{
-		var cache = Pool.GetList<BaseModule>();
+		var cache = Pool.Get<List<BaseModule>>();
 
 		foreach (var type in types)
 		{
@@ -244,7 +239,7 @@ public class ModuleProcessor : BaseProcessor,asf IModuleProcessor
 			}
 		}
 
-		Pool.FreeList(ref cache);
+		Pool.FreeUnmanaged(ref cache);
 	}
 	public void Uninstall(IModule module)
 	{

@@ -6,31 +6,25 @@ using Carbon.Components;
 using Carbon.Contracts;
 using Carbon.Core;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Managers;
 
-public class ScriptProcessor : BaseProcessor,asf IScriptProcessor
+public class ScriptProcessor : BaseProcessor, IScriptProcessor
 {
 	public override string Name => "Script Processor";
 	public override bool EnableWatcher => !Community.IsConfigReady || Community.Runtime.Config.Watchers.ScriptWatchers;
 	public override string Folder => Defines.GetScriptsFolder();
 	public override string Extension => ".cs";
+	public override float Rate => Community.Runtime.Config.Processors.ScriptProcessingRate;
 	public override Type IndexedType => typeof(Script);
 
 	public override void Start()
 	{
-		BlacklistPattern = new[]
-		{
+		BlacklistPattern =
+		[
 			"backups",
 			"debug",
 			"cszip_dev"
-		};
+		];
 
 		base.Start();
 
@@ -43,7 +37,10 @@ public class ScriptProcessor : BaseProcessor,asf IScriptProcessor
 		{
 			if (instance.Value is Script script)
 			{
-				if (script.Loader != null && !script.Loader.HasFinished) return false;
+				if (script.Loader != null && !script.Loader.HasFinished)
+				{
+					return false;
+				}
 			}
 		}
 
@@ -55,7 +52,10 @@ public class ScriptProcessor : BaseProcessor,asf IScriptProcessor
 		{
 			if (instance.Value is Script script)
 			{
-				if (script.Loader != null && !script.Loader.HasRequires && !script.Loader.HasFinished) return false;
+				if (script.Loader != null && !script.Loader.HasRequires && !script.Loader.HasFinished)
+				{
+					return false;
+				}
 			}
 		}
 
@@ -67,7 +67,10 @@ public class ScriptProcessor : BaseProcessor,asf IScriptProcessor
 		{
 			if (instance.Value is Script script)
 			{
-				if (script.Loader != null && !script.Loader.IsExtension && !script.Loader.HasFinished) return false;
+				if (script.Loader != null && !script.Loader.IsExtension && !script.Loader.HasFinished)
+				{
+					return false;
+				}
 			}
 		}
 
@@ -115,7 +118,7 @@ public class ScriptProcessor : BaseProcessor,asf IScriptProcessor
 		{
 			try
 			{
-				ModLoader.GetOrCreateFailedCompilation(File).Clear();
+				ModLoader.GetCompilationResult(File).Clear();
 
 				Loader = new ScriptLoader
 				{

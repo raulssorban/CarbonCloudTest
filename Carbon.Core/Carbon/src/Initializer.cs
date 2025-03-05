@@ -4,30 +4,18 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using API.Assembly;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Core;
 
 public class Initializer : ICarbonComponent
 {
 	public void Awake(EventArgs args)
 	{
-		Logger.Debug($"A new instance of '{this}' created");
 	}
-
 	public void OnEnable(EventArgs args)
 	{
-		Logger.Debug($"Triggered '{this}' OnEnable");
 	}
-
 	public void OnDisable(EventArgs args)
 	{
-		Logger.Debug($"Triggered '{this}' OnDisable");
 	}
 
 	public void OnLoaded(EventArgs args)
@@ -84,11 +72,11 @@ public class Initializer : ICarbonComponent
 					@" |  |  |  |       |      <       |_|   |_|       |    |  |" + Environment.NewLine +
 					@" |________|___|___|___|__|__|____|_______|__|____|_______|" + Environment.NewLine +
 					@"                                                          " + Environment.NewLine +
-					@"    WE HAVE DETECTED YOUR SERVER IS STILL USING OXIDE.    " + Environment.NewLine +
-					@"    CARBON WILL NOT WORK PROPERLY.                        " + Environment.NewLine +
+					@"    WE HAVE DETECTED YOUR SERVER IS STILL PATCHED WITH    " + Environment.NewLine +
+					@"    OXIDE. CARBON WILL NOT WORK IN THIS ENVIRONMENT.		" + Environment.NewLine +
 					@"                                                          " + Environment.NewLine +
-					@"    REMOVE THE 'RustDedicated_Data\Managed' FOLDER AND    " + Environment.NewLine +
-					@"    EXECUTE YOUR STEAMCMD UPDATE PROCESS AGAIN.           " + Environment.NewLine +
+					@"    PLEASE VERIFY YOUR GAME FILES WITH STEAMCMD THEN		" + Environment.NewLine +
+					@"    REBOOT THE SERVER.									" + Environment.NewLine +
 					@"                                                          " + Environment.NewLine +
 					@"    THIS SERVER WILL BE TERMINATED IN 60 SECONDS.         " + Environment.NewLine +
 					@"    THANK YOU <3                                          " + Environment.NewLine +
@@ -124,8 +112,9 @@ public class Initializer : ICarbonComponent
 					@"    CARBON WILL NOT WORK PROPERLY.                        " + Environment.NewLine +
 					@"                                                          " + Environment.NewLine +
 					@"    PLEASE MAKE SURE UNITY DOORSTOP IS BEING EXECUTED.    " + Environment.NewLine +
-					@"    IF THE PROBLEM PRESIST PLEASE OPEN A NEW ISSUE AT     " + Environment.NewLine +
+					@"    IF THE PROBLEM PRESISTS, PLEASE OPEN A NEW ISSUE AT   " + Environment.NewLine +
 					@"    GITHUB OR ASK FOR SUPPORT ON OUR DISCORD.             " + Environment.NewLine +
+					@"				DISCORD.GG/CARBONMOD						" + Environment.NewLine +
 					@"                                                          " + Environment.NewLine +
 					@"    THIS SERVER WILL BE TERMINATED IN 60 SECONDS.         " + Environment.NewLine +
 					@"    THANK YOU <3                                          " + Environment.NewLine +
@@ -171,7 +160,6 @@ public class Initializer : ICarbonComponent
 			return;
 		}
 	}
-
 	public void OnUnloaded(EventArgs args)
 	{	
 		Logger.Log("Uninitalizing...");

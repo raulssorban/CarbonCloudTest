@@ -2,23 +2,17 @@
 using API.Hooks;
 using HarmonyLib;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Hooks;
 
 public struct HookRuntime
-{sdf
+{
 	public string LastError;
 	public HookState Status;
 
-	// Harmony
 	public Harmony HarmonyHandler;
-	public MethodInfo Prefix, Postfix, Transpiler;
+	public MethodInfo Prefix;
+	public MethodInfo Postfix;
+	public MethodInfo Transpiler;
 }
 
 public struct Subscription
@@ -26,11 +20,18 @@ public struct Subscription
 	public string Identifier, Subscriber;
 
 	public Subscription(string id, string sub)
-	{ Identifier = id; Subscriber = sub; }
+	{
+		Identifier = id;
+		Subscriber = sub;
+	}
 }
 
 public struct TaskStatus
 {
-	public int Static, Patch, Dynamic, Metadata;
-	public int Total { get => (Static + Patch + Dynamic + Metadata); }
+	public int Static;
+	public int Patch;
+	public int Dynamic;
+	public int Metadata;
+
+	public readonly int Total => Static + Patch + Dynamic + Metadata;
 }

@@ -1,7 +1,3 @@
-[submodule "Tools/DepotDownloader"]
-	path = Tools/DepotDownloader
-	url = https://github.com/SteamRE/DepotDownloader.git
-	branch = .
 [submodule "Carbon.Core/Carbon.Components/Carbon.Compat"]
 	path = Carbon.Core/Carbon.Components/Carbon.Compat
 	url = https://github.com/CarbonCommunity/Carbon.Compat.git
@@ -38,15 +34,27 @@
 	path = Carbon.Core/Carbon.Hooks/Carbon.Hooks.Community
 	url = https://github.com/CarbonCommunity/Carbon.Hooks.Community.git
 	branch = .
-[submodule "Carbon.Core/Carbon.Native"]
-	path = Carbon.Core/Carbon.Native
-	url = https://github.com/CarbonCommunity/Carbon.Native.git
-	branch = .
 [submodule "Carbon.Core/Carbon.Hooks/Carbon.Hooks.Internal"]
 	path = Carbon.Core/Carbon.Hooks/Carbon.Hooks.Internal
 	url = https://github.com/CarbonCommunity/Carbon.Hooks.git
 	branch = main
+[submodule "Carbon.Core/Carbon.Native"]
+	path = Carbon.Core/Carbon.Native
+	url = https://github.com/CarbonCommunity/Carbon.Native.git
+	branch = .
 [submodule "Carbon.Core/Carbon.Components/Carbon.Test"]
 	path = Carbon.Core/Carbon.Components/Carbon.Test
 	url = https://github.com/CarbonCommunity/Carbon.Test.git
 	branch = .
+[submodule "Tools/DepotDownloader"]
+	path = Tools/DepotDownloader
+	url = https://github.com/CarbonCommunity/Carbon.Depot.git
+[submodule "Carbon.Core/Carbon.Components/Carbon.Common.Client"]
+	path = Carbon.Core/Carbon.Components/Carbon.Common.Client
+	url = https://github.com/CarbonCommunity/Carbon.Common.Client.V2.git
+[submodule "Carbon.Core/Carbon.Components/Carbon.Startup"]
+	path = Carbon.Core/Carbon.Components/Carbon.Startup
+	url = https://github.com/CarbonCommunity/Carbon.Startup.git
+[submodule "Carbon.Core/Carbon.Profiler"]
+	path = Carbon.Core/Carbon.Profiler
+	url = https://github.com/CarbonCommunity/Carbon.Profiler.git

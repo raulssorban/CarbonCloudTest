@@ -1,11 +1,9 @@
-###
-### Copyright (c) 2024 Carbon Community
-### All rights reserved
-###
 name: Edge Build
 concurrency: build-3-edge
 
 on:
+  workflow_dispatch:
+  
   push:
     branches:
       - develop
@@ -17,7 +15,7 @@ on:
 jobs:
   bootstrap:
     name: 🥾 Bootstrap
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     outputs:
       date: ${{ steps.step1.outputs.date }}
@@ -47,7 +45,7 @@ jobs:
   build-linux:
     name: 🐧 Linux
     needs: bootstrap
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     continue-on-error: false
 
     outputs:
@@ -64,7 +62,7 @@ jobs:
       - name: 🛤️ Setup the dotnet build environment
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.200
 
       - uses: dtolnay/rust-toolchain@stable
       - uses: ClementTsang/cargo-action@v0.0.3
@@ -86,7 +84,7 @@ jobs:
           ${GITHUB_WORKSPACE}/Tools/Build/linux/build.sh MinimalUnix "EDGE" "edge_build"
 
       - name: ⬆️ Upload the artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-develop-linux
           path: |
@@ -112,7 +110,7 @@ jobs:
       - name: 🛤️ Setup the dotnet build environment
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.200
 
       - uses: dtolnay/rust-toolchain@stable
       - uses: ClementTsang/cargo-action@v0.0.3
@@ -134,7 +132,7 @@ jobs:
           call %GITHUB_WORKSPACE%\Tools\Build\win\build.bat Minimal EDGE edge_build
 
       - name: ⬆️ Upload the artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-develop-windows
           path: |
@@ -147,7 +145,7 @@ jobs:
   release-on-commit:
     name: 💾 Edge Release
     needs: ["bootstrap", "build-linux", "build-windows"]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: 🗑️ Delete existing release tag
@@ -163,7 +161,7 @@ jobs:
         shell: bash
 
       - name: ⬇️ Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: Release
 
@@ -172,7 +170,7 @@ jobs:
         working-directory: Release
 
       - name: 🏷️ Update release tag
-        uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b
+        uses: softprops/action-gh-release@a92196038060e0c673cf3ba5b98710dd716731df
         with:
           draft: false
           prerelease: true

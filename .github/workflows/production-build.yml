@@ -1,21 +1,13 @@
-###
-### Copyright (c) 2024 Carbon Community 
-### All rights reserved
-###
 name: Production Build
 concurrency: build-1-production
 
 on:    
-  push:
-    branches:
-      - production
-
   workflow_dispatch:
 
 jobs:
   bootstrap:
     name: 🥾 Bootstrap
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     outputs:
       date:    ${{ steps.step1.outputs.date }}
@@ -48,7 +40,7 @@ jobs:
   build-linux:
     name: 🐧 Linux
     needs: bootstrap
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     continue-on-error: false
 
     outputs:
@@ -76,6 +68,13 @@ jobs:
         args: -r --target x86_64-unknown-linux-gnu
         directory: Carbon.Core/Carbon.Native
         
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: ClementTsang/cargo-action@v0.0.3
+      with:
+        command: build
+        args: --target x86_64-unknown-linux-gnu --profile prod
+        directory: Carbon.Core/Carbon.Native
+        
     - name: 🔨 Setup the Carbon build environment
       shell: bash
       run: |
@@ -85,16 +84,19 @@ jobs:
       shell: bash
       run: |
         export VERSION=${{ needs.bootstrap.outputs.version }}
+        ${GITHUB_WORKSPACE}/Tools/Build/linux/build.sh ReleaseUnix "PROD" "production_build"
         ${GITHUB_WORKSPACE}/Tools/Build/linux/build.sh MinimalUnix "PROD" "production_build"
         
     - name: ⬆️ Upload the artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-production-linux
         path: |
+          Release/Carbon.Linux.Release.tar.gz
+          Release/Carbon.Linux.Release.info
           Release/Carbon.Linux.Minimal.tar.gz
           Release/Carbon.Linux.Minimal.info
-          
+
     - name: 🗑️ Delete existing previous release tag
       uses: dev-drprasad/delete-tag-and-release@92d94d77429cb0436597047a92369526a5824f50
       with:
@@ -128,12 +130,73 @@ jobs:
           -H "Content-Type: application/json" \
           -d "{\"tag_name\": \"productionprev_build\", \"draft\": false, \"prerelease\": true}" \
           "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
+          
+  # BUILD WINDOWS --------------------------------------------------------------
+  build-windows:
+    name: 💻 Windows
+    needs: bootstrap
+    runs-on: windows-latest
+    continue-on-error: false
+    
+    steps:
+    - name: 🔗 Checkout source code from github
+      uses: actions/checkout@v3
+      with:
+        ref: production
+        token: ${{ secrets.PAT_ALL_REPO }}
+        submodules: recursive
+
+    - name: 🛤️ Setup the dotnet build environment
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 8.0.x
+
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: ClementTsang/cargo-action@v0.0.3
+      with:
+        command: build
+        args: -r --target x86_64-pc-windows-msvc
+        directory: Carbon.Core/Carbon.Native
+        
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: ClementTsang/cargo-action@v0.0.3
+      with:
+        command: build
+        args: --target x86_64-pc-windows-msvc --profile prod
+        directory: Carbon.Core/Carbon.Native
+        
+    - name: 🔨 Setup the Carbon build environment
+      shell: cmd
+      run: |
+        %GITHUB_WORKSPACE%\Tools\Build\win\bootstrap.bat
+
+    - name: 🔨 Built Carbon on Windows
+      shell: cmd
+      run: |
+        set VERSION=${{ needs.bootstrap.outputs.version }}
+        call %GITHUB_WORKSPACE%\Tools\Build\win\build.bat Release PROD production_build
+        call %GITHUB_WORKSPACE%\Tools\Build\win\build.bat Minimal PROD production_build
+
+    - name: ⬆️ Upload the artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-production-windows
+        path: |
+          Release/Carbon.Windows.Release.zip
+          Release/Carbon.Windows.Release.info
+          Release/Carbon.Windows.Minimal.zip
+          Release/Carbon.Windows.Minimal.info
+
+    - name: 🔨 Upload NuGet package
+      shell: cmd
+      run: | 
+        %GITHUB_WORKSPACE%\Tools\Build\win\publish_nuget.bat ${{ secrets.NUGET_API }} ${{ needs.bootstrap.outputs.version }}
 
   # RELEASE --------------------------------------------------------------------
   release-on-schedule:
     name: 💾 Production Release
-    needs: [ "bootstrap", "build-linux" ]
-    runs-on: ubuntu-latest
+    needs: [ "bootstrap", "build-linux", "build-windows" ]
+    runs-on: ubuntu-22.04
     if: ${{ (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (github.event_name == 'schedule' && needs.build-linux.outputs.wipe == 'true') }}
 
     steps:
@@ -150,7 +213,7 @@ jobs:
       shell: bash
 
     - name: ⬇️ Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: Release/
         
@@ -159,7 +222,7 @@ jobs:
       working-directory: Release
 
     - name: 🏷️ Update release tag
-      uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b
+      uses: softprops/action-gh-release@a92196038060e0c673cf3ba5b98710dd716731df
       with:
         draft: false
         prerelease: false
@@ -176,5 +239,11 @@ jobs:
           
           ${{ needs.build-linux.outputs.build_info }}
         files: |
+          Release/build-production-linux/Carbon.Linux.Release.info
+          Release/build-production-linux/Carbon.Linux.Release.tar.gz
+          Release/build-production-windows/Carbon.Windows.Release.info
+          Release/build-production-windows/Carbon.Windows.Release.zip
           Release/build-production-linux/Carbon.Linux.Minimal.info
           Release/build-production-linux/Carbon.Linux.Minimal.tar.gz
+          Release/build-production-windows/Carbon.Windows.Minimal.info
+          Release/build-production-windows/Carbon.Windows.Minimal.zip
